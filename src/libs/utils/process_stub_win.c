@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <direct.h>
+#include <conio.h>
 
 static FILE *qtcFd;
 static wchar_t *sleepMsg;
@@ -45,9 +46,8 @@ enum RunMode { Run, Debug, Suspend };
 /* Print some "press enter" message, wait for that, exit. */
 static void doExit(int code)
 {
-    char buf[2];
     _putws(sleepMsg);
-    fgets(buf, 2, stdin); /* Minimal size to make it wait */
+    _getch();
     exit(code);
 }
 
