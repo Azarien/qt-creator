@@ -39,14 +39,16 @@
 #include <conio.h>
 
 static FILE *qtcFd;
-static wchar_t *sleepMsg;
+static char sleepMsg[256];
 
 enum RunMode { Run, Debug, Suspend };
 
 /* Print some "press enter" message, wait for that, exit. */
 static void doExit(int code)
 {
-    _putws(sleepMsg);
+    /* set console codepage to OEM in case the process changed it to something else */
+    SetConsoleOutputCP(GetOEMCP());
+    puts(sleepMsg);
     _getch();
     exit(code);
 }
@@ -124,7 +126,9 @@ int main()
         fprintf(stderr, "This is an internal helper of Qt Creator. Do not run it manually.\n");
         return 1;
     }
-    sleepMsg = argv[ArgMsg];
+
+    /* convert message to OEM codepage */
+    WideCharToMultiByte(CP_OEMCP, 0, argv[ArgMsg], -1, sleepMsg, sizeof(sleepMsg), NULL, NULL);
 
     /* Connect to the master, i.e. Creator. */
     if (!(qtcFd = _wfopen(argv[ArgSocket], L"w"))) {
