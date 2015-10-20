@@ -972,6 +972,20 @@ void CppEditorPlugin::test_FollowSymbolUnderCursor_data()
         "template<class $T>\n"
         "using Foo = Bar<@T>;\n"
     );
+
+    QTest::newRow("qualifiedNames") << _(
+        "struct C\n"
+        "{\n"
+        "    struct Nested { int $member; };\n"
+        "    void f();\n"
+        "};\n"
+        "\n"
+        "void C::f()\n"
+        "{\n"
+        "    C::Nested object;\n"
+        "    object.@member;\n"
+        "}\n"
+    );
 }
 
 void CppEditorPlugin::test_FollowSymbolUnderCursor()

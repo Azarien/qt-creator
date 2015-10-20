@@ -89,7 +89,6 @@ public:
     virtual bool eventFilter(QObject *o, QEvent *e);
 
 private:
-    void finalizeRequest();
     void proposalComputed();
     void processProposalItem(AssistProposalItem *proposalItem);
     void handlePrefixExpansion(const QString &newPrefix);
@@ -251,7 +250,7 @@ void CodeAssistantPrivate::requestProposal(AssistReason reason,
         connect(m_requestRunner, &ProcessorRunner::finished,
                 this, &CodeAssistantPrivate::proposalComputed);
         connect(m_requestRunner, &ProcessorRunner::finished,
-                this, &CodeAssistantPrivate::finalizeRequest);
+                m_requestRunner, &QObject::deleteLater);
         connect(m_requestRunner, &ProcessorRunner::finished,
                 q, &CodeAssistant::finished);
         assistInterface->prepareForAsyncUse();
@@ -306,7 +305,7 @@ void CodeAssistantPrivate::proposalComputed()
 {
     // Since the request runner is a different thread, there's still a gap in which the queued
     // signal could be processed after an invalidation of the current request.
-    if (m_requestRunner != sender())
+    if (!m_requestRunner || m_requestRunner != sender())
         return;
 
     IAssistProposal *newProposal = m_requestRunner->proposal();
@@ -381,12 +380,6 @@ void CodeAssistantPrivate::handlePrefixExpansion(const QString &newPrefix)
     m_editorWidget->setCursorPosition(m_proposal->basePosition());
     m_editorWidget->replace(currentPosition - m_proposal->basePosition(), newPrefix);
     notifyChange();
-}
-
-void CodeAssistantPrivate::finalizeRequest()
-{
-    if (ProcessorRunner *runner = qobject_cast<ProcessorRunner *>(sender()))
-        delete runner;
 }
 
 void CodeAssistantPrivate::finalizeProposal()
@@ -550,6 +543,7 @@ CodeAssistant::CodeAssistant() : d(new CodeAssistantPrivate(this))
 
 CodeAssistant::~CodeAssistant()
 {
+    destroyContext();
     delete d;
 }
 
